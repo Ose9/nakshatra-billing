@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Nakshatra Observatory Billing v2</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f8fb;
+            color: #334155
+        }
+
+        .app {
+            max-width: 1180px;
+            margin: 20px auto;
+            padding: 0 14px
+        }
+
+        .header {
+            background: #5b7ea6;
+            color: #fff;
+            padding: 18px 20px;
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 15px
+        }
+
+        .logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #fff;
+            color: #5b7ea6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 800;
+            border: 3px solid #fff
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 23px
+        }
+
+        .header p {
+            margin: 4px 0 0;
+            color: #cbd5e1
+        }
+
+        .nav {
+            display: flex;
+            gap: 8px;
+            background: #fff;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd
+        }
+
+        .nav button {
+            background: #e8edf3;
+            color: #1f2937
+        }
+
+        .nav button.active {
+            background: #5b7ea6;
+            color: white
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 0 0 14px 14px;
+            box-shadow: 0 4px 20px #0001
+        }
+
+        .view {
+            display: none
+        }
+
+        .view.active {
+            display: block
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px
+        }
+
+        .section {
+            margin: 4px 0 18px
+        }
+
+        .section h3 {
+            font-size: 15px;
+            margin: 0 0 10px
+        }
+
+        .itembar {
+            display: grid;
+            grid-template-columns: 2fr 1fr .7fr auto;
+            gap: 8px;
+            align-items: end
+        }
+
+        .itembar input,
+        .itembar select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px
+        }
+
+        button {
+            border: 0;
+            border-radius: 7px;
+            padding: 10px 14px;
+            font-weight: bold;
+            cursor: pointer
+        }
+
+        .primary {
+            background: #5b7ea6;
+            color: white
+        }
+
+        .secondary {
+            background: #e7edf3
+        }
+
+        .danger {
+            background: #fee2e2;
+            color: #991b1b
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px
+        }
+
+        th,
+        td {
+            padding: 9px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 13px
+        }
+
+        th {
+            background: #f7f9fb
+        }
+
+        .right {
+            text-align: right
+        }
+
+        .summary {
+            margin-left: auto;
+            width: 340px;
+            max-width: 100%;
+            margin-top: 15px
+        }
+
+        .sumrow {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0
+        }
+
+        .grand {
+            font-size: 20px;
+            font-weight: 800;
+            border-top: 2px solid #5b7ea6;
+            padding-top: 9px
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 18px
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 12px
+        }
+
+        .statgrid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px
+        }
+
+        .stat {
+            background: #f7f9fb;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px
+        }
+
+        .stat b {
+            display: block;
+            font-size: 22px;
+            margin-top: 5px
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            flex-wrap: wrap
+        }
+
+        .filters .field {
+            min-width: 170px
+        }
+
+        .search {
+            max-width: 330px
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px;
+            color: #64748b
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: #0008;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .modal.show {
+            display: flex
+        }
+
+        .modalbox {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            overflow: auto;
+            position: relative
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border-radius: 50%;
+            background: #e7edf3;
+            color: #1f2937;
+            font-size: 18px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer
+        }
+
+        .modal-close:hover {
+            background: #fee2e2;
+            color: #991b1b
+        }
+
+        @media(max-width:800px) {
+
+            .grid,
+            .statgrid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .itembar {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .itembar button {
+                grid-column: 1/-1
+            }
+        }
+
+        @media(max-width:520px) {
+
+            .grid,
+            .statgrid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff
+            }
+
+            .app {
+                margin: 0;
+                padding: 0
+            }
+
+            .header,
+            .nav,
+            .no-print {
+                display: none !important
+            }
+
+            .card {
+                box-shadow: none;
+                padding: 0
+            }
+
+            .print-area {
+                display: block !important
+            }
+        }
+
+        .print-area {
+            display: none
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="logo"><img src ="D:\Logo\logo-photoaidcom-cropped.jpg" style="height: 70px; width: 70px;"></div>
+            <div>
+                <h1>NAKSHATRA EDUCATION</h1>
+                <p>Kasar Observatory — Billing & Sales</p>
+            </div>
+        </header>
+        <nav class="nav no-print">
+            <button id="tabBill" class="active" onclick="showView('billing')">New Bill</button>
+            <button id="tabHistory" onclick="showView('history')">Bill History</button>
+            <button id="tabReport" onclick="showView('report')">Daily Sales Report</button>
+            <button id="tabMonthlyReport" onclick="showView('monthlyReport')">Monthly Sales Report</button>
+            <button onclick="settings()">Settings</button>
+        </nav>
+
+        <section id="billing" class="card view active">
+            <div class="section">
+                <h3>Customer Details</h3>
+                <div class="grid">
+                    <div class="field"><label>Customer Name</label><input id="customer" placeholder="Customer name">
+                    </div>
+                    <div class="field"><label>Mobile</label><input id="mobile" placeholder="Optional"></div>
+                    <div class="field"><label>Bill Date</label><input id="date" type="date"></div>
+                </div>
+            </div>
+            <div class="section no-print">
+                <h3>Add Service / Item</h3>
+                <div class="itembar">
+                    <div><label>Predefined Service / Item</label><select id="service" onchange="servicePick()">
+                            <option value="">Select or type below</option>
+                        </select></div>
+                    <div><label>Rate (₹)</label><input id="rate" type="number" min="0" step=".01"></div>
+                    <div><label>Quantity</label><input id="qty" type="number" min="1" value="1"></div>
+                    <button class="primary" onclick="addItem()">+ Add</button>
+                </div>
+                <div style="margin-top:8px"><input id="customItem" placeholder="Or type a custom service/item name"
+                        style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:7px"></div>
+            </div>
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>Service / Item</th>
+                        <th class="right">Qty</th>
+                        <th class="right">Rate</th>
+                        <th class="right">Amount</th>
+                        <th class="no-print"></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="grid" style="margin-top:18px">
+                <div class="field"><label>GST %</label><input id="gst" type="number" min="0" max="100" step=".01"
+                        value="0" oninput="render()"></div>
+                <div class="field"><label>Payment Mode</label><select id="payment">
+                        <option>Cash</option>
+                        <option>UPI</option>
+                        <option>Card</option>
+                        <option>Bank Transfer</option>
+                        <option>Other</option>
+                    </select></div>
+                <div class="field"><label>Discount %</label><input id="discount" type="number" min="0" max="100"
+                        step=".01" value="0" oninput="render()"></div>
+            </div>
+            <div class="summary">
+                <div class="sumrow"><span>Subtotal</span><b>₹<span id="subtotal">0.00</span></b></div>
+                <div class="sumrow"><span>Discount</span><b>-₹<span id="discountAmt">0.00</span></b></div>
+                <div class="sumrow"><span>GST</span><b>₹<span id="gstAmt">0.00</span></b></div>
+                <div class="sumrow grand"><span>TOTAL</span><span>₹<span id="total">0.00</span></span></div>
+            </div>
+            <div class="actions no-print"><button class="primary" onclick="saveAndPrint()">💾 Save &
+                    Print</button><button class="secondary" onclick="saveOnly()">Save Bill</button><button
+                    class="secondary" onclick="newBill()">＋ New Bill</button></div>
+            <p class="muted no-print">Thermal printing uses your browser's print dialog. Choose your 58 mm or 80 mm
+                printer.</p>
+        </section>
+
+        <section id="history" class="card view">
+            <h2>Bill History</h2>
+            <div class="filters no-print">
+                <div class="field"><label>Search</label><input id="histSearch" class="search"
+                        placeholder="Bill no, customer, mobile..." oninput="renderHistory()"></div>
+                <div class="field"><label>From</label><input id="fromDate" type="date" onchange="renderHistory()"></div>
+                <div class="field"><label>To</label><input id="toDate" type="date" onchange="renderHistory()"></div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bill No.</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Customer</th>
+                        <th>Mobile</th>
+                        <th>Payment</th>
+                        <th class="right">Total</th>
+                        <th class="no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </section>
+
+        <section id="report" class="card view">
+            <h2>Daily Sales Report</h2>
+            <div class="filters no-print">
+                <div class="field"><label>Date</label><input id="reportDate" type="date" onchange="renderReport()">
+                </div><button class="secondary" onclick="printReport()">🖨 Print Report</button>
+            </div>
+            <div class="statgrid" style="margin-top:15px">
+                <div class="stat">Bills<b id="rBills">0</b></div>
+                <div class="stat">Customers<b id="rCustomers">0</b></div>
+                <div class="stat">Subtotal<b id="rSub">₹0</b></div>
+                <div class="stat">GST<b id="rGst">₹0</b></div>
+            </div>
+            <h3 style="margin-top:25px">Payment Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Payment Mode</th>
+                        <th class="right">Bills</th>
+                        <th class="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentReport"></tbody>
+            </table>
+            <div class="total" style="margin-top:15px">DAY TOTAL: ₹<span id="rTotal">0.00</span></div>
+        </section>
+
+        <section id="monthlyReport" class="card view">
+            <h2>Monthly Sales Report</h2>
+            <div class="filters no-print">
+                <div class="field"><label>Month</label><input id="reportMonth" type="month"
+                        onchange="renderMonthlyReport()"></div><button class="secondary"
+                    onclick="printMonthlyReport()">🖨 Print Report</button>
+            </div>
+            <div class="statgrid" style="margin-top:15px">
+                <div class="stat">Bills<b id="mBills">0</b></div>
+                <div class="stat">Customers<b id="mCustomers">0</b></div>
+                <div class="stat">Subtotal<b id="mSub">₹0</b></div>
+                <div class="stat">GST<b id="mGst">₹0</b></div>
+            </div>
+            <h3 style="margin-top:25px">Payment Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Payment Mode</th>
+                        <th class="right">Bills</th>
+                        <th class="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="monthlyPaymentReport"></tbody>
+            </table>
+            <div class="total" style="margin-top:15px">MONTH TOTAL: ₹<span id="mTotal">0.00</span></div>
+        </section>
+    </div>
+
+    <div id="printReceipt" class="print-area"></div>
+    <div id="modal" class="modal no-print">
+        <div class="modalbox">
+            <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Include SheetJS Library for Excel conversion -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+  let fileHandle = null;
+  const EXCEL_HEADERS = ['Bill No.', 'Customer', 'Mobile', 'Items', 'Discount', 'Payment Mode', 'Date', 'Time'];
+
+  function billsToRows(bills) {
+    return bills.map(b => ({
+      'Bill No.': String(b.billNo || '').padStart(5, '0'),
+      Customer: b.customer || '',
+      Mobile: b.mobile || '',
+      Items: (b.items || []).map(it => `${it.name} x${it.qty}`).join(', '),
+      Discount: b.discount > 0 ? `${b.discountRate}% (₹${b.discount.toFixed(2)})` : '',
+      'Payment Mode': b.payment || '',
+      Date: b.date || '',
+      Time: b.time || ''
+    }));
+  }
+
+  async function exportBillsToExcel() {
+    try {
+      const rawData = localStorage.getItem('nakshatra_bills');
+      const bills = rawData ? JSON.parse(rawData) : [];
+      if (!bills.length && !fileHandle) return;
+
+      const worksheet = XLSX.utils.json_to_sheet(billsToRows(bills), { header: EXCEL_HEADERS });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Bills');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      if (window.showSaveFilePicker) {
+        if (!fileHandle) {
+          fileHandle = await window.showSaveFilePicker({
+            suggestedName: 'Nakshatra_Education_Bills.xlsx',
+            types: [{
+              description: 'Excel File',
+              accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+            }]
+          });
+        }
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } else {
+        // Fallback for browsers without the File System Access API
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'Nakshatra_Education_Bills.xlsx';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error('Error exporting Excel file:', err);
+    }
+  }
+</script>
+
+    <script>
+        
+        const defaultServices = [
+            ["Stargazing Session", 500], ["Telescope Observation", 300], ["Astrophotography Session", 1000],
+            ["Night Sky Photography", 750], ["Astronomy Workshop", 500], ["Solar Observation", 300],
+            ["School Astronomy Session", 1500], ["Observatory Entry", 200], ["Camping", 1000]
+        ];
+        let services = JSON.parse(localStorage.getItem('nakshatra_services') || 'null') || defaultServices;
+        let items = [], billNo = Number(localStorage.getItem('nakshatra_next_bill') || 1);
+        const today = () => new Date().toISOString().slice(0, 10);
+        document.getElementById('date').value = today(); document.getElementById('reportDate').value = today(); document.getElementById('reportMonth').value = today().slice(0, 7);
+        renderServices(); render();
+
+        function money(n) { return Number(n || 0).toFixed(2) }
+        function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) }
+        function renderServices() { document.getElementById('service').innerHTML = '<option value="">Select a service</option>' + services.map((s, i) => `<option value="${i}">${esc(s[0])} — ₹${money(s[1])}</option>`).join('') }
+        function servicePick() { let i = document.getElementById('service').value; if (i !== '') { document.getElementById('rate').value = services[i][1]; document.getElementById('customItem').value = services[i][0] } }
+        function addItem() {
+            let name = document.getElementById('customItem').value.trim();
+            let rate = Number(document.getElementById('rate').value), qty = Number(document.getElementById('qty').value);
+            if (!name || rate < 0 || qty <= 0) { alert('Enter a service/item, rate and quantity.'); return }
+            items.push({ name, rate, qty }); document.getElementById('customItem').value = ''; document.getElementById('rate').value = ''; document.getElementById('qty').value = 1; document.getElementById('service').value = ''; render();
+        }
+        function removeItem(i) { items.splice(i, 1); render() }
+        function calc() { let subtotal = items.reduce((s, x) => s + x.rate * x.qty, 0), d = Number(document.getElementById('discount').value) || 0, discount = subtotal * d / 100, taxable = subtotal - discount, g = Number(document.getElementById('gst').value) || 0, gst = taxable * g / 100; return { subtotal, discount, gst, total: taxable + gst } }
+        function render() {
+            let tb = document.querySelector('#itemsTable tbody'); tb.innerHTML = '';
+            items.forEach((x, i) => tb.innerHTML += `<tr><td>${esc(x.name)}</td><td class="right">${x.qty}</td><td class="right">₹${money(x.rate)}</td><td class="right">₹${money(x.rate * x.qty)}</td><td class="no-print"><button class="danger" onclick="removeItem(${i})">Remove</button></td></tr>`);
+            let c = calc(); document.getElementById('subtotal').textContent = money(c.subtotal); document.getElementById('discountAmt').textContent = money(c.discount); document.getElementById('gstAmt').textContent = money(c.gst); document.getElementById('total').textContent = money(c.total);
+        }
+        function nowTime() { return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) }
+        function getBill() { let c = calc(); return { billNo, date: document.getElementById('date').value, time: nowTime(), customer: document.getElementById('customer').value.trim() || 'Walk-in Customer', mobile: document.getElementById('mobile').value.trim(), items: [...items], gstRate: Number(document.getElementById('gst').value) || 0, discountRate: Number(document.getElementById('discount').value) || 0, discount: c.discount, subtotal: c.subtotal, gst: c.gst, total: c.total, payment: document.getElementById('payment').value } }
+        function saveAndPrintLegacy(print = false) {
+            if (!items.length) { alert('Add at least one item.'); return }
+            let b = getBill(), bills = JSON.parse(localStorage.getItem('nakshatra_bills') || '[]'); bills.push(b); localStorage.setItem('nakshatra_bills', JSON.stringify(bills));
+            billNo++; localStorage.setItem('nakshatra_next_bill', billNo); exportBillsToExcel(); if (print) printBill(b); else alert('Bill ' + String(b.billNo).padStart(5, '0') + ' saved.');
+        }
+        function saveAndPrint() { saveAndPrintLegacy(true) } function saveOnly() { saveOnlyBase() }
+        function saveOnlyBase() { if (!items.length) { alert('Add at least one item.'); return } let b = getBill(), bills = JSON.parse(localStorage.getItem('nakshatra_bills') || '[]'); bills.push(b); localStorage.setItem('nakshatra_bills', JSON.stringify(bills)); billNo++; localStorage.setItem('nakshatra_next_bill', billNo); alert('Bill ' + String(b.billNo).padStart(5, '0') + ' saved.'); exportBillsToExcel(); }
+        function newBill() { if (items.length && !confirm('Start a new bill?')) return; items = []; document.getElementById('customer').value = ''; document.getElementById('mobile').value = ''; document.getElementById('date').value = today(); document.getElementById('gst').value = 0; document.getElementById('discount').value = 0; render() }
+        function receiptHTML(b) {
+            let rows = b.items.map(x => `<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td style="text-align:right">₹${money(x.rate * x.qty)}</td></tr>`).join('');
+            return `<div style="font-family:'Courier New', Courier, monospace; width: 100%; max-width: 320px; margin: 0 auto; color: #000; font-weight: bold; font-size: 13px; line-height: 1.3;">
+  
+  <!-- Header -->
+  <div style="text-align: center; font-size: 18px; font-weight: bold;">Nakshatra Education</div>
+  <div style="text-align: center; font-size: 12px; margin: 2px 0 4px 0;">Kasar Devi, Almora,Uttarakhand 263601</div>
+  <div style="display: flex; justify-content: space-between; font-size: 12px;">
+    <span>Bill No. ${esc(b.billNo || '101')}</span>
+    <span>${esc(b.phone || '+91 9410318187')}</span>
+  </div>
+
+  <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+  <!-- Details -->
+  <div style="display: flex; justify-content: space-between;">
+    <span>Date &amp; Time</span>
+    <span>${esc(b.date)}${b.time ? ', ' + esc(b.time) : ''}</span>
+  </div>
+  <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 3px;">
+    <span style="flex-shrink: 0;">Billed To</span>
+    <span style="flex: 1; text-align: right; word-break: break-word;">${esc(b.customer) }</span>
+  </div>
+  <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 3px;">
+    <span style="flex-shrink: 0;">Mobile</span>
+    <span style="flex: 1; text-align: right; word-break: break-word;">${esc(b.mobile) }</span>
+  </div>
+  <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 3px;">
+    <span style="flex-shrink: 0;">Payment Mode</span>
+    <span style="flex: 1; text-align: right; word-break: break-word;">${esc(b.payment) }</span>
+  </div>
+
+  <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+  <!-- Items Table -->
+  <table style="width: 100%; font-family: inherit; font-size: 13px; font-weight: bold; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th style="text-align: left; padding-bottom: 6px;">DESCRIPTION</th>
+        <th style="text-align: center; padding-bottom: 6px;">QTY</th>
+        <th style="text-align: right; padding-bottom: 6px;">PRICE</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+
+  <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+  <!-- Totals -->
+  <div style="display: flex; justify-content: space-between;">
+    <span>Subtotal</span>
+    <span>${money(b.subtotal)}</span>
+  </div>
+  ${b.discount > 0 ? `<div style="display: flex; justify-content: space-between; margin-top: 3px;">
+    <span>Discount (${money(b.discountRate)}%)</span>
+    <span>-${money(b.discount)}</span>
+  </div>` : ''}
+  ${b.gstRate > 0 ? `<div style="display: flex; justify-content: space-between; margin-top: 3px;">
+    <span>CGST (${money(b.gstRate / 2)}%)</span>
+    <span>${money(b.gst / 2)}</span>
+  </div>
+  <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+    <span>SGST (${money(b.gstRate / 2)}%)</span>
+    <span>${money(b.gst / 2)}</span>
+  </div>` : ''}
+  <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: bold; margin-top: 4px;">
+    <span>TOTAL</span>
+    <span>${money(b.total)}</span>
+  </div>
+
+  <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+  <!-- Footer -->
+  <div style="text-align: center; margin-top: 12px; font-size: 14px; line-height: 1.4;">
+    Thank you for visit.<br>
+    Happy Stargazing!
+  </div>
+
+</div>`
+        }
+        function printBill(b) { document.getElementById('printReceipt').innerHTML = receiptHTML(b); document.querySelectorAll('.app').forEach(x => x.style.display = 'none'); document.getElementById('printReceipt').style.display = 'block'; window.print(); document.querySelectorAll('.app').forEach(x => x.style.display = 'block'); document.getElementById('printReceipt').style.display = 'none' }
+        function showView(v) { document.querySelectorAll('.view').forEach(x => x.classList.remove('active')); document.getElementById(v).classList.add('active'); document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active')); if (v === 'billing') tabBill.classList.add('active'); if (v === 'history') { tabHistory.classList.add('active'); renderHistory() } if (v === 'report') { tabReport.classList.add('active'); renderReport() } if (v === 'monthlyReport') { tabMonthlyReport.classList.add('active'); renderMonthlyReport() } }
+        function allBills() { return JSON.parse(localStorage.getItem('nakshatra_bills') || '[]') }
+        function renderHistory() {
+            let q = (document.getElementById('histSearch').value || '').toLowerCase(), f = document.getElementById('fromDate').value, t = document.getElementById('toDate').value;
+            let a = allBills().filter(b => (!q || String(b.billNo).includes(q) || b.customer.toLowerCase().includes(q) || b.mobile.includes(q)) && (!f || b.date >= f) && (!t || b.date <= t)).reverse();
+            let tb = document.getElementById('historyBody'); tb.innerHTML = a.length ? a.map((b, i) => `<tr><td>${String(b.billNo).padStart(5, '0')}</td><td>${esc(b.date)}</td><td>${esc(b.time || '')}</td><td>${esc(b.customer)}</td><td>${esc(b.mobile)}</td><td>${esc(b.payment)}</td><td class="right">₹${money(b.total)}</td><td class="no-print"><button class="primary" onclick="printBill(${JSON.stringify(b).replace(/"/g, '&quot;')})">Print</button> <button class="danger" onclick="deleteBill(${b.billNo})">Delete</button></td></tr>`).join('') : '<tr><td colspan="7" class="empty">No bills found.</td></tr>'
+        }
+        function closeModal() { document.getElementById('modal').classList.remove('show') }
+        function deleteBill(billNo) {
+            if (!confirm('Delete bill ' + String(billNo).padStart(5, '0') + '? This cannot be undone.')) return;
+            let bills = allBills().filter(b => b.billNo !== billNo);
+            localStorage.setItem('nakshatra_bills', JSON.stringify(bills));
+            renderHistory();
+            exportBillsToExcel();
+        }
+        function renderReport() {
+            let d = document.getElementById('reportDate').value, a = allBills().filter(b => b.date === d), sub = a.reduce((s, b) => s + b.subtotal, 0), gst = a.reduce((s, b) => s + b.gst, 0), tot = a.reduce((s, b) => s + b.total, 0);
+            document.getElementById('rBills').textContent = a.length; document.getElementById('rCustomers').textContent = new Set(a.map(b => b.mobile || b.customer)).size; document.getElementById('rSub').textContent = '₹' + money(sub); document.getElementById('rGst').textContent = '₹' + money(gst); document.getElementById('rTotal').textContent = money(tot);
+            let modes = {}; a.forEach(b => { modes[b.payment] ??= { n: 0, v: 0 }; modes[b.payment].n++; modes[b.payment].v += b.total }); document.getElementById('paymentReport').innerHTML = Object.keys(modes).map(k => `<tr><td>${esc(k)}</td><td class="right">${modes[k].n}</td><td class="right">₹${money(modes[k].v)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">No sales for this date.</td></tr>'
+        }
+        function reportInsights(a, tot) {
+            let itemMap = {};
+            a.forEach(b => (b.items || []).forEach(it => { itemMap[it.name] ??= { qty: 0, revenue: 0 }; itemMap[it.name].qty += it.qty; itemMap[it.name].revenue += it.qty * it.rate }));
+            let topItems = Object.entries(itemMap).sort((x, y) => y[1].revenue - x[1].revenue);
+            let modes = {};
+            a.forEach(b => { modes[b.payment] ??= { n: 0, v: 0 }; modes[b.payment].n++; modes[b.payment].v += b.total });
+            let topMode = Object.entries(modes).sort((x, y) => y[1].v - x[1].v)[0];
+            let topBill = a.slice().sort((x, y) => y.total - x.total)[0];
+            let uniqueCustomers = new Set(a.map(b => b.mobile || b.customer)).size;
+            return { topItems, modes, topMode, topBill, uniqueCustomers, avg: a.length ? tot / a.length : 0 };
+        }
+        function printReport() {
+            let d = document.getElementById('reportDate').value, a = allBills().filter(b => b.date === d);
+            let sub = a.reduce((s, b) => s + b.subtotal, 0), gst = a.reduce((s, b) => s + b.gst, 0), tot = a.reduce((s, b) => s + b.total, 0);
+            let ins = reportInsights(a, tot);
+
+            let billRows = a.length ? a.map(b => `<tr><td>${String(b.billNo).padStart(5, '0')}</td><td>${esc(b.customer)}</td><td>${esc(b.mobile)}</td><td>${esc(b.payment)}</td><td style="text-align:right">₹${money(b.subtotal)}</td><td style="text-align:right">₹${money(b.gst)}</td><td style="text-align:right">₹${money(b.total)}</td></tr>`).join('') : `<tr><td colspan="7" style="text-align:center;padding:14px;color:#64748b">No bills recorded for this date.</td></tr>`;
+            let itemRows = ins.topItems.map(([name, v]) => `<tr><td>${esc(name)}</td><td style="text-align:right">${v.qty}</td><td style="text-align:right">₹${money(v.revenue)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center;padding:10px;color:#64748b">No items sold.</td></tr>`;
+            let paymentRows = Object.entries(ins.modes).map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right">${v.n}</td><td style="text-align:right">₹${money(v.v)}</td><td style="text-align:right">${tot ? (v.v / tot * 100).toFixed(1) : '0.0'}%</td></tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:10px;color:#64748b">No sales for this date.</td></tr>`;
+
+            let insightsList = [`Total revenue for the day: ₹${money(tot)} across ${a.length} bill${a.length === 1 ? '' : 's'}.`];
+            if (a.length) {
+                insightsList.push(`Average bill value: ₹${money(ins.avg)}.`);
+                insightsList.push(`Unique customers served: ${ins.uniqueCustomers}.`);
+                if (ins.topItems.length) insightsList.push(`Best-selling item: ${esc(ins.topItems[0][0])} — ${ins.topItems[0][1].qty} sold, ₹${money(ins.topItems[0][1].revenue)} revenue.`);
+                if (ins.topMode) insightsList.push(`Most used payment mode: ${esc(ins.topMode[0])} — ${ins.topMode[1].n} bill${ins.topMode[1].n === 1 ? '' : 's'}, ${tot ? (ins.topMode[1].v / tot * 100).toFixed(1) : '0.0'}% of sales.`);
+                if (ins.topBill) insightsList.push(`Highest value bill: Bill ${String(ins.topBill.billNo).padStart(5, '0')} — ${esc(ins.topBill.customer)} — ₹${money(ins.topBill.total)}.`);
+            }
+
+            const th = 'border:1px solid #cbd5e1;padding:6px;text-align:left';
+            const thr = 'border:1px solid #cbd5e1;padding:6px;text-align:right';
+            document.getElementById('printReceipt').innerHTML = `<div style="font-family:Arial,sans-serif;width:100%;color:#334155">
+    <div style="text-align:center;margin-bottom:16px">
+        <h2 style="margin:0">NAKSHATRA EDUCATION — KASAR OBSERVATORY</h2>
+        <div style="color:#475569">Daily Sales Report — ${esc(d)}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+        <tr>
+            <td style="${th};text-align:center"><b>Bills</b><br>${a.length}</td>
+            <td style="${th};text-align:center"><b>Customers</b><br>${ins.uniqueCustomers}</td>
+            <td style="${th};text-align:center"><b>Subtotal</b><br>₹${money(sub)}</td>
+            <td style="${th};text-align:center"><b>GST</b><br>₹${money(gst)}</td>
+            <td style="${th};text-align:center;background:#f7f9fb"><b>Day Total</b><br>₹${money(tot)}</td>
+        </tr>
+    </table>
+    <h3 style="margin:0 0 6px">Bills</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">
+        <thead><tr style="background:#f7f9fb"><th style="${th}">Bill No.</th><th style="${th}">Customer</th><th style="${th}">Mobile</th><th style="${th}">Payment</th><th style="${thr}">Subtotal</th><th style="${thr}">GST</th><th style="${thr}">Total</th></tr></thead>
+        <tbody>${billRows}</tbody>
+    </table>
+    <h3 style="margin:0 0 6px">Item-wise Sales</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">
+        <thead><tr style="background:#f7f9fb"><th style="${th}">Item</th><th style="${thr}">Qty Sold</th><th style="${thr}">Revenue</th></tr></thead>
+        <tbody>${itemRows}</tbody>
+    </table>
+    <h3 style="margin:0 0 6px">Payment Summary</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">
+        <thead><tr style="background:#f7f9fb"><th style="${th}">Payment Mode</th><th style="${thr}">Bills</th><th style="${thr}">Amount</th><th style="${thr}">% of Sales</th></tr></thead>
+        <tbody>${paymentRows}</tbody>
+    </table>
+    <h3 style="margin:0 0 6px">Insights</h3>
+    <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">${insightsList.map(x => `<li>${x}</li>`).join('')}</ul>
+</div>`;
+            document.querySelectorAll('.app').forEach(x => x.style.display = 'none'); document.getElementById('printReceipt').style.display = 'block'; window.print(); document.querySelectorAll('.app').forEach(x => x.style.display = 'block'); document.getElementById('printReceipt').style.display = 'none'
+        }
+        function monthLabel(m) { let [y, mo] = m.split('-'); return new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) }
+        function renderMonthlyReport() {
+            let m = document.getElementById('reportMonth').value, a = allBills().filter(b => (b.date || '').slice(0, 7) === m), sub = a.reduce((s, b) => s + b.subtotal, 0), gst = a.reduce((s, b) => s + b.gst, 0), tot = a.reduce((s, b) => s + b.total, 0);
+            document.getElementById('mBills').textContent = a.length; document.getElementById('mCustomers').textContent = new Set(a.map(b => b.mobile || b.customer)).size; document.getElementById('mSub').textContent = '₹' + money(sub); document.getElementById('mGst').textContent = '₹' + money(gst); document.getElementById('mTotal').textContent = money(tot);
+            let modes = {}; a.forEach(b => { modes[b.payment] ??= { n: 0, v: 0 }; modes[b.payment].n++; modes[b.payment].v += b.total }); document.getElementById('monthlyPaymentReport').innerHTML = Object.keys(modes).map(k => `<tr><td>${esc(k)}</td><td class="right">${modes[k].n}</td><td class="right">₹${money(modes[k].v)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">No sales for this month.</td></tr>'
+        }
+        function printMonthlyReport() {
+            let m = document.getElementById('reportMonth').value, a = allBills().filter(b => (b.date || '').slice(0, 7) === m);
+            let sub = a.reduce((s, b) => s + b.subtotal, 0), gst = a.reduce((s, b) => s + b.gst, 0), tot = a.reduce((s, b) => s + b.total, 0);
+            let ins = reportInsights(a, tot);
+
+            let dayMap = {};
+            a.forEach(b => { dayMap[b.date] ??= { n: 0, v: 0 }; dayMap[b.date].n++; dayMap[b.date].v += b.total });
+            let dayRows = Object.keys(dayMap).sort().map(d => `<tr><td>${esc(d)}</td><td style="text-align:right">${dayMap[d].n}</td><td style="text-align:right">₹${money(dayMap[d].v)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center;padding:10px;color:#64748b">No bills recorded for this month.</td></tr>`;
+            let itemRows = ins.topItems.map(([name, v]) => `<tr><td>${esc(name)}</td><td style="text-align:right">${v.qty}</td><td style="text-align:right">₹${money(v.revenue)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center;padding:10px;color:#64748b">No items sold.</td></tr>`;
+            let paymentRows = Object.entries(ins.modes).map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right">${v.n}</td><td style="text-align:right">₹${money(v.v)}</td><td style="text-align:right">${tot ? (v.v / tot * 100).toFixed(1) : '0.0'}%</td></tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:10px;color:#64748b">No sales for this month.</td></tr>`;
+
+            let busiestDay = Object.entries(dayMap).sort((x, y) => y[1].v - x[1].v)[0];
+            let insightsList = [`Total revenue for the month: ₹${money(tot)} across ${a.length} bill${a.length === 1 ? '' : 's'}.`];
+            if (a.length) {
+                insightsList.push(`Average bill value: ₹${money(ins.avg)}.`);
+                insightsList.push(`Unique customers served: ${ins.uniqueCustomers}.`);
+                if (busiestDay) insightsList.push(`Busiest day: ${esc(busiestDay[0])} — ${busiestDay[1].n} bill${busiestDay[1].n === 1 ? '' : 's'}, ₹${money(busiestDay[1].v)} revenue.`);
+                if (ins.topItems.length) insightsList.push(`Best-selling item: ${esc(ins.topItems[0][0])} — ${ins.topItems[0][1].qty} sold, ₹${money(ins.topItems[0][1].revenue)} revenue.`);
+                if (ins.topMode) insightsList.push(`Most used payment mode: ${esc(ins.topMode[0])} — ${ins.topMode[1].n} bill${ins.topMode[1].n === 1 ? '' : 's'}, ${tot ? (ins.topMode[1].v / tot * 100).toFixed(1) : '0.0'}% of sales.`);
+                if (ins.topBill) insightsList.push(`Highest value bill: Bill ${String(ins.topBill.billNo).padStart(5, '0')} — ${esc(ins.topBill.customer)} — ₹${money(ins.topBill.total)}.`);
+            }
+
+            const th = 'border:1px solid #cbd5e1;padding:6px;text-align:left';
+            const thr = 'border:1px solid #cbd5e1;padding:6px;text-align:right';
+            document.getElementById('printReceipt').innerHTML = `<div style="font-family:Arial,sans-serif;width:100%;color:#334155">
+    <div style="text-align:center;margin-bottom:16px">
+        <h2 style="margin:0">NAKSHATRA EDUCATION — KASAR OBSERVATORY</h2>
+        <div style="color:#475569">Monthly Sales Report — ${esc(monthLabel(m))}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+        <tr>
+            <td style="${th};text-align:center"><b>Bills</b><br>${a.length}</td>
+            <td style="${th};text-align:center"><b>Customers</b><br>${ins.uniqueCustomers}</td>
+            <td style="${th};text-align:center"><b>Subtotal</b><br>₹${money(sub)}</td>
+            <td style="${th};text-align:center"><b>GST</b><br>₹${money(gst)}</td>
+            <td style="${th};text-align:center;background:#f7f9fb"><b>Month Total</b><br>₹${money(tot)}</td>
+        </tr>
+    </table>
+    <h3 style="margin:0 0 6px">Day-wise Sales</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">
+        <thead><tr style="background:#f7f9fb"><th style="${th}">Date</th><th style="${thr}">Bills</th><th style="${thr}">Amount</th></tr></thead>
+        <tbody>${dayRows}</tbody>
+    </table>
+    <h3 style="margin:0 0 6px">Item-wise Sales</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">
+        <thead><tr style="background:#f7f9fb"><th style="${th}">Item</th><th style="${thr}">Qty Sold</th><th style="${thr}">Revenue</th></tr></thead>
+        <tbody>${itemRows}</tbody>
+    </table>
+    <h3 style="margin:0 0 6px">Payment Summary</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">
+        <thead><tr style="background:#f7f9fb"><th style="${th}">Payment Mode</th><th style="${thr}">Bills</th><th style="${thr}">Amount</th><th style="${thr}">% of Sales</th></tr></thead>
+        <tbody>${paymentRows}</tbody>
+    </table>
+    <h3 style="margin:0 0 6px">Insights</h3>
+    <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">${insightsList.map(x => `<li>${x}</li>`).join('')}</ul>
+</div>`;
+            document.querySelectorAll('.app').forEach(x => x.style.display = 'none'); document.getElementById('printReceipt').style.display = 'block'; window.print(); document.querySelectorAll('.app').forEach(x => x.style.display = 'block'); document.getElementById('printReceipt').style.display = 'none'
+        }
+        function settings() { document.getElementById('modalTitle').textContent = 'Services & Settings'; document.getElementById('modalBody').innerHTML = '<p class="muted">Edit your predefined services below. Changes are saved in this browser.</p>' + services.map((s, i) => `<div style="display:grid;grid-template-columns:1fr 120px auto;gap:7px;margin:7px 0"><input id="sn${i}" value="${esc(s[0])}"><input id="sr${i}" type="number" value="${s[1]}"><button class="danger" onclick="deleteService(${i})">Delete</button></div>`).join('') + '<hr><div style="display:grid;grid-template-columns:1fr 120px auto;gap:7px"><input id="newSN" placeholder="New service"><input id="newSR" type="number" placeholder="Rate"><button class="primary" onclick="addService()">Add</button></div><div class="actions"><button class="primary" onclick="saveServices()">Save Changes</button></div>'; document.getElementById('modal').classList.add('show') }
+        function saveServices() { services = services.map((s, i) => [document.getElementById('sn' + i).value, Number(document.getElementById('sr' + i).value) || 0]); localStorage.setItem('nakshatra_services', JSON.stringify(services)); renderServices(); closeModal(); alert('Services updated.') }
+        function addService() { let n = document.getElementById('newSN').value.trim(), r = Number(document.getElementById('newSR').value); if (!n || r < 0) return alert('Enter service and rate.'); services.push([n, r]); settings() }
+        function deleteService(i) { services.splice(i, 1); settings() }
+        render();
+    </script>
+</body>
+
+</html>
