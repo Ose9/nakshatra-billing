@@ -530,7 +530,7 @@
     <!-- Google Sheets backend (via Apps Script Web App) -->
 <script>
   // Paste your deployed Apps Script Web App URL and the API key you set in Code.gs here.
-  const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbz9U779ibkSkTd6rjlzn5rDbny7I2KS3O6HgR3fILXk1Swf9DlAOs1aYiopESAHaCB7_A/exec';
+  const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbw5DF7CG1dvbpd2ySeUW05RTDUeKpRyfM7XKs1CmHlm_5ZW11LnG0lswBYkdQE4m8CX5g/exec';
   const API_KEY = 'bcadbc33-bd22-4052-b335-a8c28f343273';
 
   let billsCache = [];
@@ -593,6 +593,7 @@
         renderServices(); render();
 
         function money(n) { return Number(n || 0).toFixed(2) }
+        function fmtDate(iso) { let m = String(iso ?? '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}-${m[2]}-${m[1].slice(2)}` : (iso ?? '') }
         function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) }
         function renderServices() { document.getElementById('service').innerHTML = '<option value="">Select a service</option>' + services.map((s, i) => `<option value="${i}">${esc(s[0])} — ₹${money(s[1])}</option>`).join('') }
         function servicePick() { let i = document.getElementById('service').value; if (i !== '') { document.getElementById('rate').value = services[i][1]; document.getElementById('customItem').value = services[i][0] } }
@@ -644,7 +645,7 @@
   <!-- Details -->
   <div style="display: flex; justify-content: space-between;">
     <span>Date &amp; Time</span>
-    <span>${esc(b.date)}${b.time ? ', ' + esc(b.time) : ''}</span>
+    <span>${esc(fmtDate(b.date))}${b.time ? ',' + esc(b.time) : ''}</span>
   </div>
   <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 3px;">
     <span style="flex-shrink: 0;">Billed To</span>
@@ -718,7 +719,7 @@
         function renderHistory() {
             let q = (document.getElementById('histSearch').value || '').toLowerCase(), f = document.getElementById('fromDate').value, t = document.getElementById('toDate').value;
             let a = allBills().filter(b => (!q || String(b.billNo).includes(q) || b.customer.toLowerCase().includes(q) || b.mobile.includes(q)) && (!f || b.date >= f) && (!t || b.date <= t)).reverse();
-            let tb = document.getElementById('historyBody'); tb.innerHTML = a.length ? a.map((b, i) => `<tr><td>${String(b.billNo).padStart(5, '0')}</td><td>${esc(b.date)}</td><td>${esc(b.time || '')}</td><td>${esc(b.customer)}</td><td>${esc(b.mobile)}</td><td>${esc(b.payment)}</td><td class="right">₹${money(b.total)}</td><td class="no-print"><button class="primary" onclick="printBill(${JSON.stringify(b).replace(/"/g, '&quot;')})">Print</button> <button class="danger" onclick="deleteBill(${b.billNo})">Delete</button></td></tr>`).join('') : '<tr><td colspan="7" class="empty">No bills found.</td></tr>'
+            let tb = document.getElementById('historyBody'); tb.innerHTML = a.length ? a.map((b, i) => `<tr><td>${String(b.billNo).padStart(5, '0')}</td><td>${esc(fmtDate(b.date))}</td><td>${esc(b.time || '')}</td><td>${esc(b.customer)}</td><td>${esc(b.mobile)}</td><td>${esc(b.payment)}</td><td class="right">₹${money(b.total)}</td><td class="no-print"><button class="primary" onclick="printBill(${JSON.stringify(b).replace(/"/g, '&quot;')})">Print</button> <button class="danger" onclick="deleteBill(${b.billNo})">Delete</button></td></tr>`).join('') : '<tr><td colspan="7" class="empty">No bills found.</td></tr>'
         }
         function closeModal() { document.getElementById('modal').classList.remove('show') }
         async function deleteBill(billNo) {
@@ -767,7 +768,7 @@
             document.getElementById('printReceipt').innerHTML = `<div style="font-family:Arial,sans-serif;width:100%;color:#334155">
     <div style="text-align:center;margin-bottom:16px">
         <h2 style="margin:0">NAKSHATRA EDUCATION — KASAR OBSERVATORY</h2>
-        <div style="color:#475569">Daily Sales Report — ${esc(d)}</div>
+        <div style="color:#475569">Daily Sales Report — ${esc(fmtDate(d))}</div>
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
         <tr>
@@ -811,7 +812,7 @@
 
             let dayMap = {};
             a.forEach(b => { dayMap[b.date] ??= { n: 0, v: 0 }; dayMap[b.date].n++; dayMap[b.date].v += b.total });
-            let dayRows = Object.keys(dayMap).sort().map(d => `<tr><td>${esc(d)}</td><td style="text-align:right">${dayMap[d].n}</td><td style="text-align:right">₹${money(dayMap[d].v)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center;padding:10px;color:#64748b">No bills recorded for this month.</td></tr>`;
+            let dayRows = Object.keys(dayMap).sort().map(d => `<tr><td>${esc(fmtDate(d))}</td><td style="text-align:right">${dayMap[d].n}</td><td style="text-align:right">₹${money(dayMap[d].v)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center;padding:10px;color:#64748b">No bills recorded for this month.</td></tr>`;
             let itemRows = ins.topItems.map(([name, v]) => `<tr><td>${esc(name)}</td><td style="text-align:right">${v.qty}</td><td style="text-align:right">₹${money(v.revenue)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center;padding:10px;color:#64748b">No items sold.</td></tr>`;
             let paymentRows = Object.entries(ins.modes).map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right">${v.n}</td><td style="text-align:right">₹${money(v.v)}</td><td style="text-align:right">${tot ? (v.v / tot * 100).toFixed(1) : '0.0'}%</td></tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:10px;color:#64748b">No sales for this month.</td></tr>`;
 
@@ -820,7 +821,7 @@
             if (a.length) {
                 insightsList.push(`Average bill value: ₹${money(ins.avg)}.`);
                 insightsList.push(`Unique customers served: ${ins.uniqueCustomers}.`);
-                if (busiestDay) insightsList.push(`Busiest day: ${esc(busiestDay[0])} — ${busiestDay[1].n} bill${busiestDay[1].n === 1 ? '' : 's'}, ₹${money(busiestDay[1].v)} revenue.`);
+                if (busiestDay) insightsList.push(`Busiest day: ${esc(fmtDate(busiestDay[0]))} — ${busiestDay[1].n} bill${busiestDay[1].n === 1 ? '' : 's'}, ₹${money(busiestDay[1].v)} revenue.`);
                 if (ins.topItems.length) insightsList.push(`Best-selling item: ${esc(ins.topItems[0][0])} — ${ins.topItems[0][1].qty} sold, ₹${money(ins.topItems[0][1].revenue)} revenue.`);
                 if (ins.topMode) insightsList.push(`Most used payment mode: ${esc(ins.topMode[0])} — ${ins.topMode[1].n} bill${ins.topMode[1].n === 1 ? '' : 's'}, ${tot ? (ins.topMode[1].v / tot * 100).toFixed(1) : '0.0'}% of sales.`);
                 if (ins.topBill) insightsList.push(`Highest value bill: Bill ${String(ins.topBill.billNo).padStart(5, '0')} — ${esc(ins.topBill.customer)} — ₹${money(ins.topBill.total)}.`);
