@@ -358,7 +358,13 @@
 <body>
     <div class="app">
         <header class="header">
-            <div class="logo"><img src ="D:\Logo\logo-photoaidcom-cropped.jpg" style="height: 70px; width: 70px;"></div>
+            <div class="logo">
+                <img src="logo-photoaidcom-cropped.jpg" alt="NE"
+                    style="width:100%;height:100%;object-fit:cover;border-radius:50%"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <span
+                    style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#5b7ea6">NE</span>
+            </div>
             <div>
                 <h1>NAKSHATRA EDUCATION</h1>
                 <p>Kasar Observatory — Billing & Sales</p>
@@ -429,8 +435,8 @@
             <div class="actions no-print"><button class="primary" onclick="saveAndPrint()">💾 Save &
                     Print</button><button class="secondary" onclick="saveOnly()">Save Bill</button><button
                     class="secondary" onclick="newBill()">＋ New Bill</button></div>
-            <p class="muted no-print">Thermal printing uses your browser's print dialog. Choose your 58 mm or 80 mm
-                printer.</p>
+            <p class="muted no-print">Thermal printing uses your browser's print dialog. Set your printer's paper
+                width (58 mm or 80 mm) once in Settings.</p>
         </section>
 
         <section id="history" class="card view">
@@ -521,61 +527,52 @@
         </div>
     </div>
 
-    <!-- Include SheetJS Library for Excel conversion -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+    <!-- Google Sheets backend (via Apps Script Web App) -->
 <script>
-  let fileHandle = null;
-  const EXCEL_HEADERS = ['Bill No.', 'Customer', 'Mobile', 'Items', 'Discount', 'Payment Mode', 'Date', 'Time'];
+  // Paste your deployed Apps Script Web App URL and the API key you set in Code.gs here.
+  const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbz9U779ibkSkTd6rjlzn5rDbny7I2KS3O6HgR3fILXk1Swf9DlAOs1aYiopESAHaCB7_A/exec';
+  const API_KEY = 'bcadbc33-bd22-4052-b335-a8c28f343273';
 
-  function billsToRows(bills) {
-    return bills.map(b => ({
-      'Bill No.': String(b.billNo || '').padStart(5, '0'),
-      Customer: b.customer || '',
-      Mobile: b.mobile || '',
-      Items: (b.items || []).map(it => `${it.name} x${it.qty}`).join(', '),
-      Discount: b.discount > 0 ? `${b.discountRate}% (₹${b.discount.toFixed(2)})` : '',
-      'Payment Mode': b.payment || '',
-      Date: b.date || '',
-      Time: b.time || ''
-    }));
+  let billsCache = [];
+
+  async function loadBills() {
+    try {
+      const res = await fetch(`${SHEETS_API_URL}?action=list&key=${encodeURIComponent(API_KEY)}`);
+      const data = await res.json();
+      if (data.error) { alert('Google Sheet error: ' + data.error); return billsCache; }
+      billsCache = data.bills || [];
+    } catch (err) {
+      console.error('Error loading bills from Google Sheet:', err);
+      alert('Could not reach the Google Sheet. Check your internet connection.');
+    }
+    return billsCache;
   }
 
-  async function exportBillsToExcel() {
+  async function addBillRemote(bill) {
     try {
-      const rawData = localStorage.getItem('nakshatra_bills');
-      const bills = rawData ? JSON.parse(rawData) : [];
-      if (!bills.length && !fileHandle) return;
-
-      const worksheet = XLSX.utils.json_to_sheet(billsToRows(bills), { header: EXCEL_HEADERS });
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Bills');
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-      if (window.showSaveFilePicker) {
-        if (!fileHandle) {
-          fileHandle = await window.showSaveFilePicker({
-            suggestedName: 'Nakshatra_Education_Bills.xlsx',
-            types: [{
-              description: 'Excel File',
-              accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
-            }]
-          });
-        }
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-      } else {
-        // Fallback for browsers without the File System Access API
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'Nakshatra_Education_Bills.xlsx';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
+      // No custom headers here on purpose: keeping this a "simple request" avoids a CORS
+      // preflight, which Apps Script Web Apps don't handle.
+      const res = await fetch(SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ key: API_KEY, action: 'add', bill }) });
+      const data = await res.json();
+      if (data.error) { alert('Google Sheet error: ' + data.error); return null; }
+      return data;
     } catch (err) {
-      if (err.name !== 'AbortError') console.error('Error exporting Excel file:', err);
+      console.error('Error saving bill to Google Sheet:', err);
+      alert('Could not save the bill — check your internet connection. Nothing was saved.');
+      return null;
+    }
+  }
+
+  async function deleteBillRemote(billNo) {
+    try {
+      const res = await fetch(SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ key: API_KEY, action: 'delete', billNo }) });
+      const data = await res.json();
+      if (data.error) { alert('Google Sheet error: ' + data.error); return false; }
+      return true;
+    } catch (err) {
+      console.error('Error deleting bill from Google Sheet:', err);
+      alert('Could not delete the bill — check your internet connection.');
+      return false;
     }
   }
 </script>
@@ -588,7 +585,9 @@
             ["School Astronomy Session", 1500], ["Observatory Entry", 200], ["Camping", 1000]
         ];
         let services = JSON.parse(localStorage.getItem('nakshatra_services') || 'null') || defaultServices;
-        let items = [], billNo = Number(localStorage.getItem('nakshatra_next_bill') || 1);
+        let items = [];
+        let paperWidthMM = Number(localStorage.getItem('nakshatra_paper_width') || 58);
+        function setPaperWidth(mm) { paperWidthMM = Number(mm) || 58; localStorage.setItem('nakshatra_paper_width', String(paperWidthMM)) }
         const today = () => new Date().toISOString().slice(0, 10);
         document.getElementById('date').value = today(); document.getElementById('reportDate').value = today(); document.getElementById('reportMonth').value = today().slice(0, 7);
         renderServices(); render();
@@ -611,18 +610,26 @@
             let c = calc(); document.getElementById('subtotal').textContent = money(c.subtotal); document.getElementById('discountAmt').textContent = money(c.discount); document.getElementById('gstAmt').textContent = money(c.gst); document.getElementById('total').textContent = money(c.total);
         }
         function nowTime() { return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) }
-        function getBill() { let c = calc(); return { billNo, date: document.getElementById('date').value, time: nowTime(), customer: document.getElementById('customer').value.trim() || 'Walk-in Customer', mobile: document.getElementById('mobile').value.trim(), items: [...items], gstRate: Number(document.getElementById('gst').value) || 0, discountRate: Number(document.getElementById('discount').value) || 0, discount: c.discount, subtotal: c.subtotal, gst: c.gst, total: c.total, payment: document.getElementById('payment').value } }
-        function saveAndPrintLegacy(print = false) {
+        function getBill() { let c = calc(); return { date: document.getElementById('date').value, time: nowTime(), customer: document.getElementById('customer').value.trim() || 'Walk-in Customer', mobile: document.getElementById('mobile').value.trim(), items: [...items], gstRate: Number(document.getElementById('gst').value) || 0, discountRate: Number(document.getElementById('discount').value) || 0, discount: c.discount, subtotal: c.subtotal, gst: c.gst, total: c.total, payment: document.getElementById('payment').value } }
+        async function saveAndPrintLegacy(print = false) {
             if (!items.length) { alert('Add at least one item.'); return }
-            let b = getBill(), bills = JSON.parse(localStorage.getItem('nakshatra_bills') || '[]'); bills.push(b); localStorage.setItem('nakshatra_bills', JSON.stringify(bills));
-            billNo++; localStorage.setItem('nakshatra_next_bill', billNo); exportBillsToExcel(); if (print) printBill(b); else alert('Bill ' + String(b.billNo).padStart(5, '0') + ' saved.');
+            let b = getBill(), saved = await addBillRemote(b);
+            if (!saved) return;
+            b.billNo = saved.billNo; billsCache.push(b);
+            if (print) printBill(b); else alert('Bill ' + String(b.billNo).padStart(5, '0') + ' saved.');
         }
         function saveAndPrint() { saveAndPrintLegacy(true) } function saveOnly() { saveOnlyBase() }
-        function saveOnlyBase() { if (!items.length) { alert('Add at least one item.'); return } let b = getBill(), bills = JSON.parse(localStorage.getItem('nakshatra_bills') || '[]'); bills.push(b); localStorage.setItem('nakshatra_bills', JSON.stringify(bills)); billNo++; localStorage.setItem('nakshatra_next_bill', billNo); alert('Bill ' + String(b.billNo).padStart(5, '0') + ' saved.'); exportBillsToExcel(); }
+        async function saveOnlyBase() {
+            if (!items.length) { alert('Add at least one item.'); return }
+            let b = getBill(), saved = await addBillRemote(b);
+            if (!saved) return;
+            b.billNo = saved.billNo; billsCache.push(b);
+            alert('Bill ' + String(b.billNo).padStart(5, '0') + ' saved.');
+        }
         function newBill() { if (items.length && !confirm('Start a new bill?')) return; items = []; document.getElementById('customer').value = ''; document.getElementById('mobile').value = ''; document.getElementById('date').value = today(); document.getElementById('gst').value = 0; document.getElementById('discount').value = 0; render() }
         function receiptHTML(b) {
             let rows = b.items.map(x => `<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td style="text-align:right">₹${money(x.rate * x.qty)}</td></tr>`).join('');
-            return `<div style="font-family:'Courier New', Courier, monospace; width: 100%; max-width: 320px; margin: 0 auto; color: #000; font-weight: bold; font-size: 13px; line-height: 1.3;">
+            return `<style>@page { size: ${paperWidthMM}mm auto; margin: 0 }</style><div style="font-family:'Courier New', Courier, monospace; width: ${paperWidthMM}mm; max-width: ${paperWidthMM}mm; margin: 0 auto; color: #000; font-weight: bold; font-size: 13px; line-height: 1.3;">
   
   <!-- Header -->
   <div style="text-align: center; font-size: 18px; font-weight: bold;">Nakshatra Education</div>
@@ -703,20 +710,23 @@
 </div>`
         }
         function printBill(b) { document.getElementById('printReceipt').innerHTML = receiptHTML(b); document.querySelectorAll('.app').forEach(x => x.style.display = 'none'); document.getElementById('printReceipt').style.display = 'block'; window.print(); document.querySelectorAll('.app').forEach(x => x.style.display = 'block'); document.getElementById('printReceipt').style.display = 'none' }
-        function showView(v) { document.querySelectorAll('.view').forEach(x => x.classList.remove('active')); document.getElementById(v).classList.add('active'); document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active')); if (v === 'billing') tabBill.classList.add('active'); if (v === 'history') { tabHistory.classList.add('active'); renderHistory() } if (v === 'report') { tabReport.classList.add('active'); renderReport() } if (v === 'monthlyReport') { tabMonthlyReport.classList.add('active'); renderMonthlyReport() } }
-        function allBills() { return JSON.parse(localStorage.getItem('nakshatra_bills') || '[]') }
+        function showView(v) { document.querySelectorAll('.view').forEach(x => x.classList.remove('active')); document.getElementById(v).classList.add('active'); document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active')); if (v === 'billing') tabBill.classList.add('active'); if (v === 'history') { tabHistory.classList.add('active'); refreshAndRenderHistory() } if (v === 'report') { tabReport.classList.add('active'); refreshAndRenderReport() } if (v === 'monthlyReport') { tabMonthlyReport.classList.add('active'); refreshAndRenderMonthlyReport() } }
+        function allBills() { return billsCache }
+        async function refreshAndRenderHistory() { document.getElementById('historyBody').innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>'; await loadBills(); renderHistory() }
+        async function refreshAndRenderReport() { await loadBills(); renderReport() }
+        async function refreshAndRenderMonthlyReport() { await loadBills(); renderMonthlyReport() }
         function renderHistory() {
             let q = (document.getElementById('histSearch').value || '').toLowerCase(), f = document.getElementById('fromDate').value, t = document.getElementById('toDate').value;
             let a = allBills().filter(b => (!q || String(b.billNo).includes(q) || b.customer.toLowerCase().includes(q) || b.mobile.includes(q)) && (!f || b.date >= f) && (!t || b.date <= t)).reverse();
             let tb = document.getElementById('historyBody'); tb.innerHTML = a.length ? a.map((b, i) => `<tr><td>${String(b.billNo).padStart(5, '0')}</td><td>${esc(b.date)}</td><td>${esc(b.time || '')}</td><td>${esc(b.customer)}</td><td>${esc(b.mobile)}</td><td>${esc(b.payment)}</td><td class="right">₹${money(b.total)}</td><td class="no-print"><button class="primary" onclick="printBill(${JSON.stringify(b).replace(/"/g, '&quot;')})">Print</button> <button class="danger" onclick="deleteBill(${b.billNo})">Delete</button></td></tr>`).join('') : '<tr><td colspan="7" class="empty">No bills found.</td></tr>'
         }
         function closeModal() { document.getElementById('modal').classList.remove('show') }
-        function deleteBill(billNo) {
+        async function deleteBill(billNo) {
             if (!confirm('Delete bill ' + String(billNo).padStart(5, '0') + '? This cannot be undone.')) return;
-            let bills = allBills().filter(b => b.billNo !== billNo);
-            localStorage.setItem('nakshatra_bills', JSON.stringify(bills));
+            let ok = await deleteBillRemote(billNo);
+            if (!ok) return;
+            billsCache = billsCache.filter(b => b.billNo !== billNo);
             renderHistory();
-            exportBillsToExcel();
         }
         function renderReport() {
             let d = document.getElementById('reportDate').value, a = allBills().filter(b => b.date === d), sub = a.reduce((s, b) => s + b.subtotal, 0), gst = a.reduce((s, b) => s + b.gst, 0), tot = a.reduce((s, b) => s + b.total, 0);
@@ -852,7 +862,13 @@
 </div>`;
             document.querySelectorAll('.app').forEach(x => x.style.display = 'none'); document.getElementById('printReceipt').style.display = 'block'; window.print(); document.querySelectorAll('.app').forEach(x => x.style.display = 'block'); document.getElementById('printReceipt').style.display = 'none'
         }
-        function settings() { document.getElementById('modalTitle').textContent = 'Services & Settings'; document.getElementById('modalBody').innerHTML = '<p class="muted">Edit your predefined services below. Changes are saved in this browser.</p>' + services.map((s, i) => `<div style="display:grid;grid-template-columns:1fr 120px auto;gap:7px;margin:7px 0"><input id="sn${i}" value="${esc(s[0])}"><input id="sr${i}" type="number" value="${s[1]}"><button class="danger" onclick="deleteService(${i})">Delete</button></div>`).join('') + '<hr><div style="display:grid;grid-template-columns:1fr 120px auto;gap:7px"><input id="newSN" placeholder="New service"><input id="newSR" type="number" placeholder="Rate"><button class="primary" onclick="addService()">Add</button></div><div class="actions"><button class="primary" onclick="saveServices()">Save Changes</button></div>'; document.getElementById('modal').classList.add('show') }
+        function settings() {
+            document.getElementById('modalTitle').textContent = 'Services & Settings';
+            document.getElementById('modalBody').innerHTML =
+                '<div style="margin-bottom:16px"><label style="display:block;font-size:12px;font-weight:bold;margin-bottom:5px">Thermal Printer Paper Width</label><select id="paperWidthSelect" onchange="setPaperWidth(this.value)" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:7px"><option value="58"' + (paperWidthMM == 58 ? ' selected' : '') + '>58 mm</option><option value="80"' + (paperWidthMM == 80 ? ' selected' : '') + '>80 mm</option></select></div><hr>' +
+                '<p class="muted">Edit your predefined services below. Changes are saved in this browser.</p>' + services.map((s, i) => `<div style="display:grid;grid-template-columns:1fr 120px auto;gap:7px;margin:7px 0"><input id="sn${i}" value="${esc(s[0])}"><input id="sr${i}" type="number" value="${s[1]}"><button class="danger" onclick="deleteService(${i})">Delete</button></div>`).join('') + '<hr><div style="display:grid;grid-template-columns:1fr 120px auto;gap:7px"><input id="newSN" placeholder="New service"><input id="newSR" type="number" placeholder="Rate"><button class="primary" onclick="addService()">Add</button></div><div class="actions"><button class="primary" onclick="saveServices()">Save Changes</button></div>';
+            document.getElementById('modal').classList.add('show')
+        }
         function saveServices() { services = services.map((s, i) => [document.getElementById('sn' + i).value, Number(document.getElementById('sr' + i).value) || 0]); localStorage.setItem('nakshatra_services', JSON.stringify(services)); renderServices(); closeModal(); alert('Services updated.') }
         function addService() { let n = document.getElementById('newSN').value.trim(), r = Number(document.getElementById('newSR').value); if (!n || r < 0) return alert('Enter service and rate.'); services.push([n, r]); settings() }
         function deleteService(i) { services.splice(i, 1); settings() }
